@@ -276,6 +276,10 @@ async def poller_worker():
                         headers = {"X-API-Key": API_KEY}
                         try:
                             resp = await client.get(url, headers=headers)
+                            logger.info(
+                                f"Polling dm_id={attempt.dm_id}: "
+                                f"status_code={resp.status_code}, response={resp.text}"
+                                )
                             if resp.status_code == 200:
                                 data = resp.json()
                                 mock_status = data.get("status")
