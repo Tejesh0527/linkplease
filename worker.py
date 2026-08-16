@@ -267,8 +267,11 @@ async def poller_worker():
                     ).limit(20)
                     res = await session.execute(stmt)
                     queued_attempts = res.scalars().all()
+                    logger.info(f"Poller: found {len(queued_attempts)} queued attempts.")
+
 
                     if not queued_attempts:
+                        logger.info("Poller: no queued attempts found.")
                         continue
 
                     for attempt in queued_attempts:
