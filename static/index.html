@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkPlease — Instagram DM Automation Engine</title>
+  <link rel="stylesheet" href="/dashboard/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="logo-group">
+        <div class="logo-icon">⚡</div>
+        <div>
+          <h1>LinkPlease Automation</h1>
+          <p class="subtitle">Instagram Comment & DM Engine</p>
+        </div>
+      </div>
+      <div class="key-status">
+        <div id="statusDot" class="status-dot"></div>
+        <span id="keyStatusText">API Key Connected</span>
+      </div>
+    </header>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card card-sent">
+        <div class="stat-header">
+          <span class="stat-title">Delivered DMs</span>
+          <span>✅</span>
+        </div>
+        <div id="statSent" class="stat-value">0</div>
+        <div class="stat-desc">Confirmed by Mock API</div>
+      </div>
+
+      <div class="stat-card card-queued">
+        <div class="stat-header">
+          <span class="stat-title">Queued / Pending</span>
+          <span>⏳</span>
+        </div>
+        <div id="statQueued" class="stat-value">0</div>
+        <div class="stat-desc">Waiting send or rate-limit retry</div>
+      </div>
+
+      <div class="stat-card card-failed">
+        <div class="stat-header">
+          <span class="stat-title">Failed DMs</span>
+          <span>⚠️</span>
+        </div>
+        <div id="statFailed" class="stat-value">0</div>
+        <div class="stat-desc">Permanent failures after retries</div>
+      </div>
+
+      <div class="stat-card card-blocked">
+        <div class="stat-header">
+          <span class="stat-title">Duplicates Blocked</span>
+          <span>🛡️</span>
+        </div>
+        <div id="statBlocked" class="stat-value">0</div>
+        <div class="stat-desc">Redeliveries & same-user rules</div>
+      </div>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+      <!-- Left Panel: Rule Management -->
+      <div class="panel">
+        <h2 class="panel-title"><span>🎯</span> Comment Rules</h2>
+        
+        <form id="ruleForm" style="margin-bottom: 2rem;">
+          <div class="form-group">
+            <label for="ruleKeyword">Keyword (Case-Insensitive)</label>
+            <input type="text" id="ruleKeyword" placeholder="e.g. PRICE, LINK, INFO" required>
+          </div>
+
+          <div class="form-group">
+            <label for="ruleMessage">DM Message to Send</label>
+            <textarea id="ruleMessage" placeholder="e.g. Thanks for commenting! Here is your link: https://..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn" style="width: 100%;">Create Rule</button>
+        </form>
+
+        <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 1rem;">Active Rules (<span id="ruleCount">0</span>)</h3>
+        <div id="rulesList" class="rules-list">
+          <p style="color: var(--text-muted); font-size: 0.9rem;">No rules configured yet.</p>
+        </div>
+      </div>
+
+      <!-- Right Panel: Simulation & Submission -->
+      <div class="panel">
+        <h2 class="panel-title"><span>🚀</span> Mock API Simulator</h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+          Fire simulated comments from <code>pseudogram-api</code> directly to your <code>/webhook</code> URL to test rate limits, duplicate filtering, and status reconciliation.
+        </p>
+
+        <form id="simForm">
+          <div class="form-group">
+            <label for="simWebhook">Target Webhook URL</label>
+            <input type="url" id="simWebhook" placeholder="https://your-domain.render.com/webhook" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label for="simCount">Event Count</label>
+              <input type="number" id="simCount" value="500" min="1" max="1000">
+            </div>
+            <div class="form-group">
+              <label for="simDuration">Duration (Seconds)</label>
+              <input type="number" id="simDuration" value="10" min="1" max="60">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-secondary" style="width: 100%;">Start Simulation Run</button>
+        </form>
+
+        <div id="consoleOutput" class="console-box" style="display: none;"></div>
+
+        <!-- Submission Form Section -->
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+          <h2 class="panel-title" style="font-size: 1.1rem;"><span>📤</span> Assignment Submission</h2>
+          <form id="submitForm">
+            <div class="form-group">
+              <label for="subEmail">Email (Applied with)</label>
+              <input type="email" id="subEmail" placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="subRepo">Public GitHub Repo URL</label>
+              <input type="url" id="subRepo" placeholder="https://github.com/you/repo" required>
+            </div>
+            <div class="form-group">
+              <label for="subWorkingUrl">Deployed Base URL (Stay live 7 days)</label>
+              <input type="url" id="subWorkingUrl" placeholder="https://your-app.onrender.com" required>
+            </div>
+            <div class="form-group">
+              <label for="subLoom">Loom Video URL (3 min)</label>
+              <input type="url" id="subLoom" placeholder="https://loom.com/share/..." required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label for="subParts">Parts Completed</label>
+                <select id="subParts">
+                  <option value="A+B+C" selected>A+B+C (Recommended)</option>
+                  <option value="A+B">A+B</option>
+                  <option value="A">A</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="subDate">Start Date</label>
+                <input type="date" id="subDate" value="2026-08-16" required>
+              </div>
+            </div>
+            <button type="submit" class="btn" style="width: 100%; background: linear-gradient(135deg, var(--accent-emerald), #059669);">Submit Assignment</button>
+          </form>
+        </div>
+
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+          <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-muted);">API Key Config</h3>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="apiKeyInput" placeholder="Enter API Key">
+            <button id="saveKeyBtn" class="btn btn-secondary" style="white-space: nowrap;">Save Key</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/dashboard/app.js"></script>
+</body>
+</html>

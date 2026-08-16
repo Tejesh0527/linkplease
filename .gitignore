@@ -1,0 +1,22 @@
+# Environment & secrets
+.env
+
+# Database
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
