@@ -201,7 +201,7 @@ async def sender_worker():
                     try:
                         resp = await client.post(url, json=payload, headers=headers)
                         
-                        if resp.status_code == 202:
+                        if resp.status_code in (200, 202):
                             data = resp.json()
                             attempt.status = "queued"
                             attempt.dm_id = data.get("dm_id")
