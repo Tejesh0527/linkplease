@@ -207,8 +207,12 @@ async def sender_worker():
                             attempt.dm_id = data.get("dm_id")
                             attempt.updated_at = utcnow()
                             await session.commit()
-                            logger.info(f"DM attempt #{attempt.id} accepted by mock API (dm_id={attempt.dm_id})")
-
+                            logger.info(
+                                f"SENDER: attempt_id={attempt.id}, "
+                                f"status={attempt.status}, "
+                                f"dm_id={attempt.dm_id}, "
+                                f"api_response={data}"
+                            )
                         elif resp.status_code == 429:
                             retry_after = int(resp.headers.get("Retry-After", "60"))
                             attempt.next_retry_at = utcnow() + datetime.timedelta(seconds=retry_after + 1)
