@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import hmac
 import hashlib
+import base64
 import uuid
 import datetime
 import logging
@@ -102,6 +103,21 @@ class KeyConfigReq(BaseModel):
 
 
 # Helper: HMAC SHA256 Verification
+def get_signing_secret(key: str) -> str:
+    """Extracts the signing secret from API_KEY (the base64-decoded email portion if in base64.token format)."""
+    if not key:
+        return ""
+    key = key.strip()
+    if "." in key:
+        part0 = key.split(".")[0]
+        try:
+            padded = part0 + "=" * (-len(part0) % 4)
+            return base64.b64decode(padded).decode("utf-8")
+        except Exception:
+            pass
+    return key
+
+
 def verify_signature(raw_body: bytes, signature_header: Optional[str]) -> bool:
     """Verifies X-PseudoGram-Signature HMAC-SHA256 header."""
     if not API_KEY:
@@ -116,13 +132,25 @@ def verify_signature(raw_body: bytes, signature_header: Optional[str]) -> bool:
     else:
         provided_hash = signature_header
 
+    # Primary check: mock API signs with base64-decoded email portion of API_KEY
+    secret = get_signing_secret(API_KEY)
     expected_hash = hmac.new(
-        API_KEY.encode('utf-8'),
+        secret.encode('utf-8'),
         raw_body,
         hashlib.sha256
     ).hexdigest()
 
-    return hmac.compare_digest(expected_hash, provided_hash)
+    if hmac.compare_digest(expected_hash, provided_hash):
+        return True
+
+    # Fallback check: raw API_KEY directly (for custom local tests or plain keys)
+    raw_key_hash = hmac.new(
+        API_KEY.strip().encode('utf-8'),
+        raw_body,
+        hashlib.sha256
+    ).hexdigest()
+
+    return hmac.compare_digest(raw_key_hash, provided_hash)
 
 
 # Required API Contract Endpoint 1: POST /webhook
