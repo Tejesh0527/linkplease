@@ -15,7 +15,7 @@ from database import (
 logger = logging.getLogger("linkplease.worker")
 
 MOCK_API_BASE = os.getenv("MOCK_API_BASE", "https://pseudogram-api.onrender.com")
-API_KEY = os.getenv("API_KEY", "")
+API_KEY = os.getenv("API_KEY", "").strip()
 
 # In-memory queue for waking matcher worker
 matcher_queue: asyncio.Queue[str] = asyncio.Queue()
@@ -31,7 +31,7 @@ MAX_SEND_RETRIES = 6
 
 def set_api_key(key: str):
     global API_KEY
-    API_KEY = key
+    API_KEY = key.strip()
 
 
 async def enforce_rate_limit():
