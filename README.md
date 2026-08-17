@@ -78,3 +78,6 @@ python run_simulation.py
 
 - **FAILURES.md**: Detailed analysis of failure modes, edge cases, race windows, and cold start considerations.
 - **Dockerfile & Procfile**: Ready for deployment on Render, Railway, or Fly.io.
+
+
+LOOM VIDEO URL:https://www.loom.com/share/7dba0f06534744ea937e708c528104bb
