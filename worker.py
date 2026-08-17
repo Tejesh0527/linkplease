@@ -69,15 +69,14 @@ async def matcher_worker():
     """Consumes comment_ids from matcher_queue and creates DM attempts."""
     logger.info("Matcher worker started.")
     while True:
+        comment_id = await matcher_queue.get()
         try:
-            comment_id = await matcher_queue.get()
             async with AsyncSessionLocal() as session:
                 # 1. Load comment
                 res = await session.execute(select(Comment).where(Comment.comment_id == comment_id))
                 comment = res.scalar_one_or_none()
 
                 if not comment:
-                    matcher_queue.task_done()
                     continue
 
                 comment_user_id = comment.user_id
@@ -100,7 +99,6 @@ async def matcher_worker():
                         await session.commit()
                         logger.info(f"Canceled {len(pending_attempts)} pending DM attempt(s) for deleted comment {comment_id}")
 
-                    matcher_queue.task_done()
                     continue
 
                 # 3. Match against active rules
@@ -119,7 +117,6 @@ async def matcher_worker():
                         attempt = DMAttempt(
                             user_id=user_id,
                             rule_id=rule_id,
-                            
                             comment_id=comment_id_value,
                             status="pending",
                             idempotency_key=idempotency_key,
@@ -134,13 +131,18 @@ async def matcher_worker():
                             await session.rollback()
                             await increment_stats_counter(session, "duplicates_blocked", 1)
                             logger.info(f"Duplicate user DM blocked for user {user_id}, rule {rule_id}")
-                            
-            matcher_queue.task_done()
+
         except asyncio.CancelledError:
-            break
+            raise
         except Exception as e:
-            logger.error(f"Error in matcher_worker: {e}", exc_info=True)
-            await asyncio.sleep(1)
+            logger.error(
+                f"Error processing comment {comment_id}: {e}",
+                exc_info=True
+            )
+            await matcher_queue.put(comment_id)
+            await asyncio.sleep(0.5)
+        finally:
+            matcher_queue.task_done()
 
 
 async def sender_worker():
