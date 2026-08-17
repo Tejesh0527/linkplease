@@ -299,15 +299,25 @@ async def poller_worker():
 
                                 elif mock_status == "failed":
                                     attempt.retry_count += 1
+
                                     if attempt.retry_count >= MAX_SEND_RETRIES:
                                         attempt.status = "failed"
-                                        logger.error(f"DM attempt #{attempt.id} marked failed after delivery poll.")
+                                        logger.error(
+                                            f"DM attempt #{attempt.id} marked failed after delivery poll."
+                                        )
                                     else:
-                                        # Re-enqueue for re-sending
+                                        # Re-enqueue for re-sending with exponential backoff
                                         attempt.status = "pending"
                                         attempt.dm_id = None
-                                        attempt.next_retry_at = utcnow()
-                                        logger.warning(f"DM attempt #{attempt.id} failed delivery. Re-enqueuing for retry {attempt.retry_count}.")
+                                        backoff = min(300, 30 * (2 ** (attempt.retry_count - 1)))
+                                        attempt.next_retry_at = utcnow() + datetime.timedelta(seconds=backoff)
+
+                                        logger.warning(
+                                            f"DM attempt #{attempt.id} failed delivery. "
+                                            f"Re-enqueuing for retry {attempt.retry_count} "
+                                            f"in {backoff}s."
+                                        )
+
                                     attempt.updated_at = utcnow()
                                     await session.commit()
 
